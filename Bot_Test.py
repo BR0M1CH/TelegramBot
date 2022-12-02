@@ -22,12 +22,10 @@ def logging(message,res):
     user = str(message.from_user.id)
     timenow = time.ctime(time.time())
     log[user]={timenow : {message.text : res}}
-    print("LOG", log)
     if user in log_1:
         log_1[user].update(log[user])
     else:
         log_1.update(log)
-    print(log_1)
     with open("Logs.json", "w") as w:
         json.dump(log_1, w, indent=4) 
 
@@ -41,7 +39,7 @@ def starter(message):
 
 @bot.message_handler(commands=["info"])
 def info(message):
-    logging(message, "/find text - кидаю самую релевантную гифку \n/random - кидаю рандомную гифку\n/randtxt text - кидаю рандомную гифку по названию")
+    logging(message, "/find text - кидаю самую релевантную гифку /random - кидаю рандомную гифку /randtxt text - кидаю рандомную гифку по названию")
     bot.send_message(message.chat.id, text = "/find text - кидаю самую релевантную гифку \n/random - кидаю рандомную гифку\n/randtxt text - кидаю рандомную гифку по названию")
 
 
