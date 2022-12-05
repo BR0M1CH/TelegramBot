@@ -1,80 +1,605 @@
 import telebot
-import requests
-import time 
-import json
+from telebot import types
+import random
 
-bot_token = '5860981337:AAFBshSLiRCdMPkYwqKgZd5oYf3VB0IpGtc'
+message_to_edit = ""
 
-api = 'BwkihOWSNtBL91h3fWKRIN6l4BBa5YQI'
+api = "5897382480:AAElanE4N3nj-_ouRyRKYVE30mShoXwi6Ls"
 
-params = {"api_key" : api, "raiting":"r"}
+gb_dict = {1:"⬜️",2:"⬜️",3:"⬜️",4:"⬜️",5:"⬜️",6:"⬜️",7:"⬜️",8:"⬜️",9:"⬜️","X":"❌", "O":"⭕️"}
+gb_list=[i for i in range(1,10)]
+bot_list = [i for i in range(9)]
+X_or_O = ["X", "O"]
 
-bot = telebot.TeleBot(bot_token)
+player, boter = " ", " "
 
-def logging(message,res):
-    passer = 0
-    log = {}
-    try:
-        with open("Logs.json", "r") as r:
-            log_1=json.load(r)
-    except:
-            log_1={}
-    user = str(message.from_user.id)
-    timenow = time.ctime(time.time())
-    log[user]={timenow : {message.text : res}}
-    if user in log_1:
-        log_1[user].update(log[user])
-    else:
-        log_1.update(log)
-    with open("Logs.json", "w") as w:
-        json.dump(log_1, w, indent=4) 
+
+bot = telebot.TeleBot(api)
+print(bot.__dict__)
+
+def bot_turn(boter):
+    global gb_list
+    a = random.choice(bot_list)
+    bot_list.remove(a)
+    gb_list[a] = boter
+
+def check_win():
+    global gb_list
+    a = None
+    if gb_list[0]==gb_list[1]==gb_list[2]:
+        a = gb_list[0]
+    elif gb_list[3]==gb_list[4]==gb_list[5]:
+        a = gb_list[3]
+    elif gb_list[6]==gb_list[7]==gb_list[8]:
+        a = gb_list[6]
+    elif gb_list[0]==gb_list[3]==gb_list[6]:
+        a = gb_list[0]
+    elif gb_list[1]==gb_list[4]==gb_list[7]:
+        a = gb_list[1]
+    elif gb_list[2]==gb_list[5]==gb_list[8]:
+        a= gb_list[2]
+    elif gb_list[0]==gb_list[4]==gb_list[8]:
+        a= gb_list[0]
+    elif gb_list[2]==gb_list[4]==gb_list[6]:
+        a = gb_list[2]
+    if a == player: return("💥Вы выиграли!💥")
+    elif a == boter: return("🎮Выиграл бот🎮")
+    else: return(None)
+
 
 @bot.message_handler(commands=["start"])
-def starter(message):
-    params = {"api_key" : api, "raiting":"r", "s" : "hello"}
-    res = requests.get("http://api.giphy.com/v1/gifs/translate", params=params).json()
-    logging(message, res["data"]["images"]["original"]["url"])
-    bot.send_video(message.chat.id, res["data"]["images"]["original"]["url"])
-    bot.send_message(message.chat.id, text=f"Приветствую, {message.from_user.first_name}\n Введите /info чтобы получить мануал")
+def start(message):
+    global message_to_edit, gb_dict, gb_list, player, boter
+    gb_XO = ["X", "O"]
+    player = random.choice(gb_XO)
+    if player == "X": 
+        bot.send_message(message.chat.id, text = "Вы играете за ❌")
+        boter = "O"
+    else: 
+        bot.send_message(message.chat.id, text = "Вы играете за ⭕️")
+        boter = "X"
+    gb = types.InlineKeyboardMarkup(row_width=3)
+    btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+    btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+    btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+    btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+    btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+    btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+    btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+    btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+    btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+    gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+    message_to_edit = bot.send_message(message.chat.id, text="Начнем игру!", reply_markup=gb)
 
-@bot.message_handler(commands=["info"])
-def info(message):
-    logging(message, "/find text - кидаю самую релевантную гифку /random - кидаю рандомную гифку /randtxt text - кидаю рандомную гифку по названию")
-    bot.send_message(message.chat.id, text = "/find text - кидаю самую релевантную гифку \n/random - кидаю рандомную гифку\n/randtxt text - кидаю рандомную гифку по названию")
+@bot.message_handler(content_types=["text"])
+def newgame(message):
+    global gb_list, message_to_edit, boter, player, bot_list
+    gb_XO = ["X", "O"]
+    player = random.choice(gb_XO)
+    if player == "X": 
+        bot.send_message(message.chat.id, text = "Вы играете за ❌")
+        boter = "O"
+    else: 
+        bot.send_message(message.chat.id, text = "Вы играете за ⭕️")
+        boter = "X"
+    gb_list=[i for i in range(1, 10)]
+    bot_list=[i for i in range(9)]
+    if message.text == "🔄Начать новую игру🔄":
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        message_to_edit = bot.send_message(message.chat.id, text="Начнем игру!", reply_markup=gb)
+    else:
+        regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+        regame.add(btn)
+        bot.send_message(message.chat.id, text="Такой команды я не знаю", reply_markup=regame)
 
 
-@bot.message_handler(commands=["find"])
-def find(message):
-    try:
-        text = message.text.split(maxsplit = 1)[1]
-        params = {"api_key" : api, "raiting":"r", "s" : text}
-        res = requests.get("http://api.giphy.com/v1/gifs/translate", params=params).json()
-        logging(message, res["data"]["images"]["original"]["url"])
-        bot.send_video(message.chat.id, res["data"]["images"]["original"]["url"])
-    except:
-        logging(message, "Упс... Такой гифки у меня нет :(")
-        bot.send_message(message.chat.id, "Упс... Такой гифки у меня нет :(")
+@bot.callback_query_handler(func = lambda callback: callback.data)
+def callback_checker(callback):
+    global message_to_edit, gb_dict, gb_list, player, boter, bot_list
+    
+    if callback.data == "1":
+        gb_list[0] = player
+        bot_list.remove(0)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
 
-@bot.message_handler(commands=["random"])
-def random(message):
-    params = {"api_key" : api, "raiting":"r"}
-    res = requests.get("http://api.giphy.com/v1/gifs/random", params=params).json()
-    logging(message, res["data"]["images"]["original"]["url"])
-    bot.send_video(message.chat.id, res["data"]["images"]["original"]["url"])
+    elif callback.data == "2":
+        gb_list[1] = player
+        bot_list.remove(1)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
 
-@bot.message_handler(commands = ["randtxt"])
-def randtxt(message):
-    try:
-        text = message.text.split(maxsplit=1)[1]
-        params = {"api_key" : api, "raiting":"r", "tag" : text}
-        res = requests.get("http://api.giphy.com/v1/gifs/random", params=params).json()
-        logging(message, res["data"]["images"]["original"]["url"])
-        bot.send_video(message.chat.id, res["data"]["images"]["original"]["url"])
-    except:
-        logging(message, "Упс... Такой гифки у меня нет :(")
-        bot.send_message(message.chat.id, "Упс... Такой гифки у меня нет :(")
+    elif callback.data == "3":
+        gb_list[2] = player
+        bot_list.remove(2)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
 
+    elif callback.data == "4":
+        gb_list[3] = player
+        bot_list.remove(3)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
 
+    elif callback.data == "5":
+        gb_list[4] = player
+        bot_list.remove(4)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
+
+    elif callback.data == "6":
+        gb_list[5] = player
+        bot_list.remove(5)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
+
+    elif callback.data == "7":
+        gb_list[6] = player
+        bot_list.remove(6)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
+
+    elif callback.data == "8":
+        gb_list[7] = player
+        bot_list.remove(7)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
+
+    elif callback.data == "9":
+        gb_list[8] = player
+        bot_list.remove(8)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=gb)
+        if check_win() != None:
+            regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+            regame.add(btn)
+            bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+        else:
+            bot_turn(boter)
+            gb = types.InlineKeyboardMarkup(row_width=3)
+            btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+            btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+            btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+            btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+            btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+            btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+            btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+            btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+            btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+            gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+            bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=gb)
+            if check_win()!=None:
+                regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn = types.KeyboardButton(text="🔄Начать новую игру🔄")
+                regame.add(btn)
+                bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
+            else:
+                gb = types.InlineKeyboardMarkup(row_width=3)
+                btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+                btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+                btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+                btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+                btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+                btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+                btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+                btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+                btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+                gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+                bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Твой ход", reply_markup=gb)
+
+    else:
+        print(callback.data)
+        print(gb_list)
+        gb = types.InlineKeyboardMarkup(row_width=3)
+        btn1 = types.InlineKeyboardButton(text = gb_dict[gb_list[0]], callback_data=gb_list[0])
+        btn2 = types.InlineKeyboardButton(text = gb_dict[gb_list[1]], callback_data=gb_list[1])
+        btn3 = types.InlineKeyboardButton(text = gb_dict[gb_list[2]], callback_data=gb_list[2])
+        btn4 = types.InlineKeyboardButton(text = gb_dict[gb_list[3]], callback_data=gb_list[3])
+        btn5 = types.InlineKeyboardButton(text = gb_dict[gb_list[4]], callback_data=gb_list[4])
+        btn6 = types.InlineKeyboardButton(text = gb_dict[gb_list[5]], callback_data=gb_list[5])
+        btn7 = types.InlineKeyboardButton(text = gb_dict[gb_list[6]], callback_data=gb_list[6])
+        btn8 = types.InlineKeyboardButton(text = gb_dict[gb_list[7]], callback_data=gb_list[7])
+        btn9 = types.InlineKeyboardButton(text = gb_dict[gb_list[8]], callback_data=gb_list[8])
+        gb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+        bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text = "Не жульничать!", reply_markup=gb)
 
 
 
