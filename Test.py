@@ -10,10 +10,99 @@ gb_dict = {1:"⬜️",2:"⬜️",3:"⬜️",4:"⬜️",5:"⬜️",6:"⬜️",7:"
 X_or_O = ["X", "O"]
 
 player, boter = " ", " "
-
+turn = 1
 
 bot = telebot.TeleBot(api)
 print(bot.__dict__)
+
+def defender(player,  boter):
+	global gb_list
+	a =  True
+	if (gb_list[0] and gb_list[1]) == player:
+		gb_list[2] = boter
+	elif(gb_list[0] and gb_list[2]) == player:
+		gb_list[1] = boter
+	elif (gb_list[1] and gb_list[2]) == player:
+		gb_list[0] = boter
+	elif (gb_list[3] and gb_list[4]) == player:
+		gb_list[5] = boter
+	elif(gb_list[3] and gb_list[5]) == player:
+		gb_list[4] = boter
+	elif (gb_list[4] and gb_list[5]) == player:
+		gb_list[3] = boter
+	elif (gb_list[6] and gb_list[7]) == player:
+		gb_list[8] = boter
+	elif(gb_list[6] and gb_list[8]) == player:
+		gb_list[7] = boter
+	elif (gb_list[7] and gb_list[8]) == player:
+		gb_list[6] = boter
+	#horizontal
+	elif (gb_list[0] and gb_list[3]) == player:
+		gb_list[6] = boter
+	elif(gb_list[0] and gb_list[6]) == player:
+		gb_list[3] = boter
+	elif (gb_list[3] and gb_list[6]) == player:
+		gb_list[0] = boter
+	elif (gb_list[1] and gb_list[4]) == player:
+		gb_list[7] = boter
+	elif(gb_list[1] and gb_list[7]) == player:
+		gb_list[4] = boter
+	elif (gb_list[4] and gb_list[7]) == player:
+		gb_list[1] = boter
+	elif (gb_list[2] and gb_list[5]) == player:
+		gb_list[8] = boter
+	elif(gb_list[2] and gb_list[8]) == player:
+		gb_list[5] = boter
+	elif (gb_list[5] and gb_list[8]) == player:
+		gb_list[2] = boter
+	#vertical
+	elif (gb_list[0] and gb_list[4]) == player:
+		gb_list[8] = boter
+	elif(gb_list[0] and gb_list[8]) == player:
+		gb_list[4] = boter
+	elif (gb_list[4] and gb_list[8]) == player:
+		gb_list[0] = boter
+	elif (gb_list[2] and gb_list[4]) == player:
+		gb_list[6] = boter
+	elif(gb_list[2] and gb_list[6]) == player:
+		gb_list[4] = boter
+	elif (gb_list[4] and gb_list[6]) == player:
+		gb_list[2] = boter
+	#diaghonal
+	else: a= False
+	return(a)
+
+def hard():
+    global boter, player, gb_list,turn
+    if turn == 1:
+        gb_list[4] = boter
+    elif turn ==2:
+        if gb_list[4] ==player:
+            gb_list[random.choice(0,2,6,8)] = boter
+        elif (gb_list[0] or gb_list[2]) == player:
+            gb_list[gb_list.index(player)+2] = boter
+        elif (gb_list[6] or gb_list[8]) == player:
+            gb_list[gb_list.index(player)-3] == boter
+        elif (gb_list[1] or gb_list[3] or gb_list[5] or gb_list[7]) == player:
+            gb_list[4] = boter
+    elif turn == 3:
+        if (gb_list[1] or gb_list[5] or gb_list[7] or gb_list[3]) == player:
+            if gb_list[1] == player:
+                gb_list[2] = boter
+            elif gb_list[5] == player:
+                gb_list[2] = boter
+            elif gb_list[7] == player:
+                gb_list[6] = boter
+            elif gb_list[3] == player:
+                gb_list[6] = boter
+        else:
+            if gb_list[6] != player:
+                gb_list[6] = boter
+            else: gb_list[2] = boter
+    elif turn == 4:
+        pass
+
+
 
 
 def btn_place():
@@ -32,7 +121,7 @@ def btn_place():
 
 
 def bot_turn(boter):
-    global gb_list
+    global gb_list, turn
     while True:
         try:
             a = random.randint(0,8)
@@ -45,8 +134,9 @@ def bot_turn(boter):
             pass
 
 def check_win():
-    global gb_list
+    global gb_list, turn
     a = None
+    print(turn)
     if gb_list[0]==gb_list[1]==gb_list[2]:
         a = gb_list[0]
     elif gb_list[3]==gb_list[4]==gb_list[5]:
@@ -63,6 +153,7 @@ def check_win():
         a= gb_list[0]
     elif gb_list[2]==gb_list[4]==gb_list[6]:
         a = gb_list[2]
+    elif turn == 10: return("Ничья!")
     if a == player: return("💥Вы выиграли!💥")
     elif a == boter: return("🎮Выиграл бот🎮")
     else: return(None)
@@ -70,11 +161,12 @@ def check_win():
 
 @bot.message_handler(commands=["start"])
 def start(message):
-    global message_to_edit, gb_dict, gb_list, player, boter, bot_list
+    global message_to_edit, gb_dict, gb_list, player, boter, bot_list, turn
     gb_XO = ["X", "O"]
     gb_list=[i for i in range(1,10)]
     bot_list = [i for i in range(1,10)]
     player = random.choice(gb_XO)
+    turn = 1
     if player == "X": 
         bot.send_message(message.chat.id, text = "Вы играете за ❌")
         boter = "O"
@@ -85,7 +177,7 @@ def start(message):
 
 @bot.message_handler(content_types=["text"])
 def newgame(message):
-    global gb_list, message_to_edit, boter, player, bot_list
+    global gb_list, message_to_edit, boter, player, bot_list, turn
     if message.text == "🔄Начать новую игру🔄":
         gb_XO = ["X", "O"]
         player = random.choice(gb_XO)
@@ -97,6 +189,7 @@ def newgame(message):
             boter = "X"
         gb_list=[i for i in range(1, 10)]
         bot_list=[i for i in range(1,10)]
+        turn = 1
         message_to_edit = bot.send_message(message.chat.id, text="Начнем игру!", reply_markup=btn_place())
     else:
         regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -107,10 +200,11 @@ def newgame(message):
 
 @bot.callback_query_handler(func = lambda callback: callback.data)
 def callback_checker(callback):
-    global message_to_edit, gb_dict, gb_list, player, boter, bot_list
+    global message_to_edit, gb_dict, gb_list, player, boter, bot_list, turn
     
     if callback.data == "1":
         gb_list[0] = player
+        turn +=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -119,6 +213,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -130,6 +225,7 @@ def callback_checker(callback):
 
     elif callback.data == "2":
         gb_list[1] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -138,6 +234,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -149,6 +246,7 @@ def callback_checker(callback):
 
     elif callback.data == "3":
         gb_list[2] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -157,6 +255,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -168,6 +267,7 @@ def callback_checker(callback):
 
     elif callback.data == "4":
         gb_list[3] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -176,6 +276,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -187,6 +288,7 @@ def callback_checker(callback):
 
     elif callback.data == "5":
         gb_list[4] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -195,6 +297,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -206,6 +309,7 @@ def callback_checker(callback):
 
     elif callback.data == "6":
         gb_list[5] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -214,6 +318,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -225,6 +330,7 @@ def callback_checker(callback):
 
     elif callback.data == "7":
         gb_list[6] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -232,6 +338,8 @@ def callback_checker(callback):
             regame.add(btn)
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
+            bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -243,6 +351,7 @@ def callback_checker(callback):
 
     elif callback.data == "8":
         gb_list[7] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -251,6 +360,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -262,6 +372,7 @@ def callback_checker(callback):
 
     elif callback.data == "9":
         gb_list[8] = player
+        turn+=1
         bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Вы походили", reply_markup=btn_place())
         if check_win() != None:
             regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -270,6 +381,7 @@ def callback_checker(callback):
             bot.send_message(message_to_edit.chat.id, text=check_win(), reply_markup=regame)
         else:
             bot_turn(boter)
+            turn+=1
             bot.edit_message_text(chat_id=message_to_edit.chat.id, message_id=message_to_edit.message_id, text="Бот походил", reply_markup=btn_place())
             if check_win()!=None:
                 regame = types.ReplyKeyboardMarkup(resize_keyboard=True)
