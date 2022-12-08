@@ -4,9 +4,13 @@ import requests
 import time 
 import json
 
-bot_token = '5860981337:AAFBshSLiRCdMPkYwqKgZd5oYf3VB0IpGtc'
-
-api = 'BwkihOWSNtBL91h3fWKRIN6l4BBa5YQI'
+try:
+    with open("api.json", "r", encoding="utf-8") as file:
+        bot_token = json.load(file)["gif_bot_api"]
+    with open("api.json", "r", encoding="utf-8") as file:
+        api = json.load(file)["giphy_api"]
+except:
+    print("Вставьте api вручную или создайте файл с такими же параметрами")
 
 params = {"api_key" : api, "raiting":"r"}
 
@@ -14,17 +18,17 @@ bot = telebot.TeleBot(bot_token)
 
 def logging(message,res):
     passer = 0
-    log = {}
+    log = {"gif": {}}
     try:
         with open("Logs.json", "r") as r:
             log_1=json.load(r)
     except:
-            log_1={}
+            log_1={"gif" : {}}
     user = str(message.from_user.id)
     timenow = time.ctime(time.time())
-    log[user]={timenow : {message.text : res}}
-    if user in log_1:
-        log_1[user].update(log[user])
+    log["gif"][user]={timenow : {message.text : res}}
+    if user in log_1["gif"]:
+        log_1["gif"][user].update(log["gif"][user])
     else:
         log_1.update(log)
     with open("Logs.json", "w") as w:
